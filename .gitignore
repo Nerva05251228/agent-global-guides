@@ -1,0 +1,4 @@
+.debug/
+temp/
+*.log
+*.tmp
