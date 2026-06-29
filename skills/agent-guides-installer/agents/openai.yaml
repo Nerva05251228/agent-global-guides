@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Guides Installer"
+  short_description: "Install sanitized global Codex and Claude guide templates."
+  default_prompt: "Use $agent-guides-installer to scan, dry-run, and install the agent global guides."

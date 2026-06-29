@@ -1,4 +1,5 @@
 .debug/
 temp/
+.ipynb_checkpoints/
 *.log
 *.tmp
