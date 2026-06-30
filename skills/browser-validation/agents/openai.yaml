@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser Validation"
+  short_description: "Validate real-machine behavior, web UI behavior, screenshots,..."
+  default_prompt: "Use $browser-validation to validate the UI or real-machine behavior with screenshots and checks."

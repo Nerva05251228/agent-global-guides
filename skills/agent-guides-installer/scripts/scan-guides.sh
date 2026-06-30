@@ -3,22 +3,31 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scan-guides.sh [--source <dir>]
+Usage: scan-guides.sh [--source <dir>]...
 
-Scans agent guide markdown files for known personal values and common secret
-patterns before installing or publishing them.
+Scans agent guide markdown files and bundled skill files for known personal
+values and common secret patterns before installing or publishing them.
 USAGE
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 skill_dir="$(cd "$script_dir/.." && pwd)"
 repo_root="$(cd "$skill_dir/../.." 2>/dev/null && pwd || true)"
-source_dir=""
+sources=()
+
+is_repo_layout() {
+  local root="$1"
+  [[ -n "$root" \
+    && -f "$root/docs/AGENTS.md" \
+    && -f "$root/docs/CLAUDE.md" \
+    && -f "$root/scripts/install-global-guides.sh" \
+    && -f "$root/skills/agent-guides-installer/SKILL.md" ]]
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --source)
-      source_dir="${2:?missing value for --source}"
+      sources+=("${2:?missing value for --source}")
       shift 2
       ;;
     -h|--help)
@@ -33,25 +42,39 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$source_dir" ]]; then
-  if [[ -n "$repo_root" && -f "$repo_root/docs/AGENTS.md" && -f "$repo_root/docs/CLAUDE.md" ]]; then
-    source_dir="$repo_root/docs"
+if [[ ${#sources[@]} -eq 0 ]]; then
+  if is_repo_layout "$repo_root"; then
+    sources+=("$repo_root/docs")
+    if [[ -d "$repo_root/skills" ]]; then
+      sources+=("$repo_root/skills")
+    fi
   elif [[ -f "$skill_dir/assets/guides/AGENTS.md" && -f "$skill_dir/assets/guides/CLAUDE.md" ]]; then
-    source_dir="$skill_dir/assets/guides"
+    sources+=("$skill_dir/assets/guides")
   else
     echo "Could not find guide source directory. Pass --source <dir>." >&2
     exit 2
   fi
 fi
 
-if [[ ! -d "$source_dir" ]]; then
-  echo "Source directory does not exist: $source_dir" >&2
-  exit 2
-fi
+resolved_sources=()
+for source_dir in "${sources[@]}"; do
+  if [[ ! -d "$source_dir" ]]; then
+    echo "Source directory does not exist: $source_dir" >&2
+    exit 2
+  fi
+  resolved_sources+=("$(cd "$source_dir" && pwd)")
+done
 
-mapfile -d '' files < <(find "$source_dir" -type f -name '*.md' -print0 | sort -z)
+mapfile -d '' files < <(
+  find "${resolved_sources[@]}" -type f \( -name '*.md' -o -name '*.sh' -o -name '*.yaml' -o -name '*.yml' \) -print0 \
+    | while IFS= read -r -d '' file; do
+        [[ "$(basename "$file")" == "scan-guides.sh" ]] && continue
+        printf '%s\0' "$file"
+      done \
+    | sort -z
+)
 if [[ ${#files[@]} -eq 0 ]]; then
-  echo "No markdown files found under: $source_dir" >&2
+  echo "No scan target files found under: ${resolved_sources[*]}" >&2
   exit 2
 fi
 
@@ -111,4 +134,4 @@ if [[ "$failed" -ne 0 ]]; then
   exit 1
 fi
 
-echo "Guide scan passed: $source_dir"
+echo "Guide scan passed: ${resolved_sources[*]}"

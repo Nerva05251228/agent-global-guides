@@ -1,0 +1,4 @@
+interface:
+  display_name: "Authoritative Planning"
+  short_description: "Create and maintain authoritative plan documents, child task..."
+  default_prompt: "Use $authoritative-planning to create or update the authoritative plan and checklist for this work."

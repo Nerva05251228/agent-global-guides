@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Image Inspection"
+  short_description: "Use Claude Code or the Claude Agent SDK path to inspect local..."
+  default_prompt: "Use $claude-image-inspection to inspect images through the Claude-specific image-reading workflow."

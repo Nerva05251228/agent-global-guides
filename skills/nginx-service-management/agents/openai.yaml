@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nginx Service Management"
+  short_description: "Inspect, modify, reload, remove, and report nginx service con..."
+  default_prompt: "Use $nginx-service-management to inspect or modify nginx/service configuration safely."

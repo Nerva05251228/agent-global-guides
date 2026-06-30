@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subagent Orchestration"
+  short_description: "Plan, dispatch, monitor, and verify Codex and Claude subagent..."
+  default_prompt: "Use $subagent-orchestration to plan and manage subagent dispatch for this task."

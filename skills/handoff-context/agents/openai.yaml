@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff Context"
+  short_description: "Create accurate handoff prompts and context summaries for a n..."
+  default_prompt: "Use $handoff-context to prepare an accurate handoff prompt or context recovery summary."

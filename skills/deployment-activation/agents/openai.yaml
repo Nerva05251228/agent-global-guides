@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deployment Activation"
+  short_description: "Activate existing project changes in the deployed environment..."
+  default_prompt: "Use $deployment-activation to activate current project changes in deployment."

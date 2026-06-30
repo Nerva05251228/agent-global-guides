@@ -9,8 +9,8 @@ Install sanitized global guide templates for Codex and Claude Code.
 
 This skill supports two modes:
 
-- Repository mode: the user cloned this repository and wants to install `docs/AGENTS.md` and `docs/CLAUDE.md`.
-- Installed-skill mode: this skill was installed separately, and the templates in `assets/guides/` are the source.
+- Repository mode: the user cloned this repository and wants to install `docs/AGENTS.md`, `docs/CLAUDE.md`, and the modular `skills/*` package.
+- Installed-skill mode: this skill was installed separately, and the templates in `assets/guides/` are the source. In this mode, install only the global markdown guides; modular skills require the full repository as the source.
 
 ## Workflow
 
@@ -20,7 +20,7 @@ This skill supports two modes:
 2. Run the scan before installing:
 
    ```bash
-   skills/agent-guides-installer/scripts/scan-guides.sh --source docs
+   scripts/scan-guides.sh
    ```
 
    If running from an installed skill without the repository root, use:
@@ -51,21 +51,25 @@ This skill supports two modes:
    - Which source directory was used.
    - Whether the scan passed.
    - Which global files were installed.
-   - Whether existing files were backed up.
+   - Whether modular skills were installed, or skipped because the installer was running in installed-skill mode.
+   - Whether existing files or skill directories were backed up.
    - That new Codex and Claude Code sessions are needed to guarantee the new rules are loaded.
 
 ## Safety Rules
 
 - Do not install unscanned templates unless the user explicitly asks to skip scanning.
 - Do not overwrite existing global files without backup.
+- Do not overwrite existing same-named skill directories without backup unless they are already identical.
+- Do not install modular skills when the resolved skills source is the same as the target skills directory.
 - Do not install the Chinese reference files as active global guides. They are review/reference copies only.
 - Do not edit the user's current repository unless the user asked to update the guide package itself.
 - If target global paths are read-only in the current sandbox, request escalation or explain the required manual command.
 
 ## Scripts
 
-- `scripts/scan-guides.sh`: scans markdown templates for known personal values and common secret patterns.
-- `scripts/install-global-guides.sh`: scans, backs up existing global files, installs English templates, and verifies copies.
+- `scripts/scan-guides.sh`: scans markdown templates and bundled skill files for known personal values and common secret patterns.
+- `scripts/install-global-guides.sh`: scans, backs up existing global files, installs English templates, installs modular skills in repository mode, and verifies copies.
+- In repository mode, the installer installs `skills/*` into both Codex and Claude skills directories. In installed-skill mode, it skips modular skills to avoid copying a user's skills directory onto itself.
 
 Useful options:
 
@@ -74,3 +78,4 @@ Useful options:
 - `--codex-home <dir>`: override `${CODEX_HOME:-$HOME/.codex}`.
 - `--claude-home <dir>`: override `${CLAUDE_HOME:-$HOME/.claude}`.
 - `--skip-scan`: skip scanning only when the user explicitly accepts that risk.
+- `--skip-skills`: install only `AGENTS.md` and `CLAUDE.md`.
