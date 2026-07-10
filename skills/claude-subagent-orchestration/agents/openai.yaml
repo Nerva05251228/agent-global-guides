@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Subagent Orchestration"
+  short_description: "Route and manage Claude-led subagent work."
+  default_prompt: "Use $claude-subagent-orchestration to plan and manage Claude-led subagent dispatch for this task."

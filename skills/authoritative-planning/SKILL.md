@@ -67,7 +67,7 @@ An item is only done after:
 - Owning docs describe what was actually built.
 - Divergences from prior design are reconciled.
 - Accepted decision changes are recorded in ADRs or equivalent decision docs.
-- `changelog.md` has an honest entry.
+- The repository changelog has an entry only when policy requires it, and the entry describes the resulting repository or product change rather than implementation history, agent activity, or validation logs.
 - The authoritative plan checklist and any relevant child task checklist are updated from `- [ ]` to `- [x]` immediately after verification.
 - Progress indexes or task lists are updated when the repository uses them.
 

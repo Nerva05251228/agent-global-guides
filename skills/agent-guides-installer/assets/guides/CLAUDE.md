@@ -22,11 +22,13 @@ After a repository exists, initialize the project with `setup-matt-pocock-skills
 
 Use `.debug/` for local-only debugging artifacts: logs, screenshots, traces, subagent logs, task specs, and temporary captures. Keep `.debug/` Git-ignored and do not commit it.
 
+Keep tracked files, Git history, and release documentation focused on resulting repository changes. Never put local debug failures, retry history, agent activity, command transcripts, validation logs, machine-specific state, or secrets in a changelog. Use `$git-repository-governance` for the full policy.
+
 For multi-step work, create or identify an authoritative plan before implementation. Chat messages are not the authoritative plan unless the same plan is written to a repository document. Use `$authoritative-planning` for plan/checklist details.
 
 If active context is unclear, the conversation appears compacted, or work resumes after interruption, inspect repository plan documents before continuing from memory. If no plan exists or it is stale, update it before dependent non-trivial work.
 
-Docs are the planning baseline, but self-consistent docs are not proof that implementation works. Completed items need implementation, real checks, updated owning docs, reconciled decision changes, `changelog.md` when appropriate, and immediate checklist updates.
+Docs are the planning baseline, but self-consistent docs are not proof that implementation works. Completed items need implementation, real checks, updated owning docs, reconciled decision changes, a repository changelog entry only when policy requires it, and immediate checklist updates.
 
 Use explicit verification statuses: `verified`, `failed with reason`, or `not verified`.
 
@@ -35,7 +37,8 @@ Use explicit verification statuses: `verified`, `failed with reason`, or `not ve
 Invoke these skills for long or task-specific workflows:
 
 - `$authoritative-planning`: multi-step plans, child task docs, checklists, executor records, verification evidence, progress recovery, and implementation-to-documentation landing.
-- `$subagent-orchestration`: Codex/Claude subagent routing, task specs, parallel/serial dispatch, read-only/editable invocation, stream logs, timeouts, retries, and fallback.
+- `$git-repository-governance`: tracked-file hygiene, `.gitignore`, secrets, repository docs, commits, branches, pull requests, changelogs, versioning, tags, and releases.
+- `$claude-subagent-orchestration`: Claude-primary subagent routing, task specs, parallel/serial dispatch, read-only/editable invocation, stream logs, timeouts, retries, and fallback.
 - `$nginx-service-management`: nginx inspection, route changes, service add/remove, SSL/proxy caution, listener/proxy port reporting, and production web-server config.
 - `$deployment-activation`: frontend rebuild/deploy, nginx root/API proxy discovery, FastAPI process restart, health/API/frontend verification, and making current project changes take effect.
 - `$browser-validation`: Playwright/headless browser checks, screenshots, traces, Xvfb, canvas/UI rendering evidence, and real-machine validation.
@@ -78,7 +81,7 @@ Do not expose comments, development notes, implementation explanations, debug wo
 Before committing or pushing to remote `main`:
 
 1. Report the planned changes.
-2. Update `changelog.md` when the repo uses it or the change is user-facing.
+2. Update the repository changelog only when its policy requires it, and record notable outcomes rather than implementation or debugging history.
 3. Wait for user confirmation.
 
 ## Rule Loading

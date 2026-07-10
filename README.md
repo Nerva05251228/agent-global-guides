@@ -12,7 +12,9 @@ Sanitized, project-agnostic global instruction templates for Codex and Claude Co
 - `scripts/scan-guides.sh` - Secret and personal-info scanner for the guide templates.
 - `skills/agent-guides-installer/` - Codex skill for installing this guide package.
 - `skills/authoritative-planning/` - Planning, checklists, verification evidence, and docs landing workflow.
-- `skills/subagent-orchestration/` - Codex/Claude subagent dispatch, monitoring, permissions, and fallback workflow.
+- `skills/git-repository-governance/` - Git repository hygiene, security, documentation, commits, changelogs, versioning, and release workflow.
+- `skills/codex-subagent-orchestration/` - Codex-primary subagent dispatch, monitoring, permissions, and fallback workflow.
+- `skills/claude-subagent-orchestration/` - Claude-primary subagent dispatch, monitoring, permissions, search delegation, and fallback workflow.
 - `skills/nginx-service-management/` - Nginx inspection, modification, reload, removal, and port reporting workflow.
 - `skills/deployment-activation/` - Frontend/backend/nginx deployment activation workflow.
 - `skills/browser-validation/` - Browser, screenshot, trace, and real-machine validation workflow.

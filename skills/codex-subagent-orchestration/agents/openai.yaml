@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Subagent Orchestration"
+  short_description: "Route and manage Codex-led subagent work."
+  default_prompt: "Use $codex-subagent-orchestration to plan and manage Codex-led subagent dispatch for this task."

@@ -22,11 +22,13 @@
 
 使用 `.debug/` 保存本地调试产物：logs、screenshots、traces、subagent logs、task specs 和临时 captures。`.debug/` 必须 Git-ignored，不提交。
 
+tracked files、Git history 和 release documentation 只记录最终形成的仓库变更。不要在 changelog 中写入本机调试失败、重试过程、agent activity、command transcripts、validation logs、机器状态或 secrets。完整规范使用 `$git-repository-governance`。
+
 多步骤工作在实现前创建或识别权威计划。聊天消息不是权威计划，除非同一计划写入仓库文档。计划和 checklist 细节使用 `$authoritative-planning`。
 
 如果当前上下文不清晰、对话被 compact/truncate，或中断后恢复工作，先检查仓库计划文档，不要只凭记忆继续。如果没有计划或计划过期，先更新计划再推进非平凡依赖工作。
 
-文档是计划基线，但文档自洽不等于实现有效。完成项需要实现完成、真实检查通过、更新归属文档、协调决策变化、必要时更新 `changelog.md`，并立即更新 checklist。
+文档是计划基线，但文档自洽不等于实现有效。完成项需要实现完成、真实检查通过、更新归属文档、协调决策变化，仅在仓库策略要求时更新 changelog，并立即更新 checklist。
 
 使用明确验证状态：`verified`、`failed with reason` 或 `not verified`。
 
@@ -35,7 +37,8 @@
 长流程或任务专用工作调用这些 skills：
 
 - `$authoritative-planning`：多步骤计划、子任务文档、checklist、executor 记录、验证证据、进度恢复和实现落回文档。
-- `$subagent-orchestration`：Codex/Claude subagent 路由、task specs、并行/串行派发、只读/可编辑调用、stream logs、timeouts、retries 和 fallback。
+- `$git-repository-governance`：tracked-file hygiene、`.gitignore`、secrets、仓库文档、commits、branches、pull requests、changelog、versioning、tags 和 releases。
+- `$claude-subagent-orchestration`：Claude 作为主 agent 时的 subagent 路由、task specs、并行/串行派发、只读/可编辑调用、stream logs、timeouts、retries 和 fallback。
 - `$nginx-service-management`：nginx 检查、路由变更、服务添加/移除、SSL/proxy 风险、listener/proxy port 报告和生产 web-server 配置。
 - `$deployment-activation`：frontend rebuild/deploy、nginx root/API proxy 发现、FastAPI process restart、health/API/frontend 验证和让当前项目改动生效。
 - `$browser-validation`：Playwright/headless browser checks、screenshots、traces、Xvfb、canvas/UI rendering evidence 和 real-machine validation。
@@ -78,7 +81,7 @@ websocket 或 long-running proxy routes 中，保留 `Upgrade`、`Connection`、
 提交或 push 到远程 `main` 前：
 
 1. 报告计划变更。
-2. 仓库使用 changelog 或变更面向用户时，更新 `changelog.md`。
+2. 仅在仓库策略要求时更新 changelog，并只记录 notable outcomes，不记录实现过程或调试历史。
 3. 等待用户确认。
 
 ## Rule Loading

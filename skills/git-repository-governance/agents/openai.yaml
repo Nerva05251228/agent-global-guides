@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Repository Governance"
+  short_description: "Keep Git repositories clean, secure, and release-ready."
+  default_prompt: "Use $git-repository-governance to audit or manage this repository's Git hygiene, documentation, commits, changelog, versioning, and release workflow."
