@@ -1,81 +1,69 @@
 ---
 name: agent-guides-installer
-description: Install sanitized global Codex and Claude Code guide templates from this repository or from the installed skill assets. Use when the user asks to install, update, verify, dry-run, bootstrap, or scan agent global guides, AGENTS.md, CLAUDE.md, Codex global instructions, or Claude global instructions from this guide package.
+description: Use when a user asks to install, update, scan, dry-run, verify, or remove legacy versions of the global Codex and Claude guide package.
 ---
 
 # Agent Guides Installer
 
-Install sanitized global guide templates for Codex and Claude Code.
+## Modes
 
-This skill supports two modes:
+- Repository mode installs the English `docs/AGENTS.md`, `docs/CLAUDE.md`, and every modular `skills/*` directory into both Codex and Claude homes.
+- Installed-skill mode uses `assets/guides/` and installs only the global markdown guides. Use a full repository clone to update all modular skills.
 
-- Repository mode: the user cloned this repository and wants to install `docs/AGENTS.md`, `docs/CLAUDE.md`, and the modular `skills/*` package.
-- Installed-skill mode: this skill was installed separately, and the templates in `assets/guides/` are the source. In this mode, install only the global markdown guides; modular skills require the full repository as the source.
+## Required workflow
 
-## Workflow
+1. Resolve the source and both target homes.
+2. Run the mandatory scanner. There is no scan bypass.
+3. Run a dry-run with the intended identity and backup options.
+4. Ask for approval before a real local installation when approval has not already been given.
+5. Run the real installer and report every installed, unchanged, backed-up, removed, skipped, failed, or unverified target.
+6. Start new Codex and Claude sessions after installation.
 
-1. Identify the source directory:
-   - Prefer the repository `docs/` directory when it exists.
-   - Otherwise use this skill's `assets/guides/` directory.
-2. Run the scan before installing:
+Linux and macOS:
 
-   ```bash
-   scripts/scan-guides.sh
-   ```
+```bash
+scripts/scan-guides.sh
+scripts/install-global-guides.sh --dry-run
+scripts/install-global-guides.sh
+```
 
-   If running from an installed skill without the repository root, use:
+Windows PowerShell:
 
-   ```bash
-   <skill-dir>/scripts/scan-guides.sh
-   ```
+```powershell
+.\scripts\scan-guides.ps1
+.\scripts\install-global-guides.ps1 -DryRun
+.\scripts\install-global-guides.ps1
+```
 
-3. Run a dry-run install:
+## Identity and backup policy
 
-   ```bash
-   scripts/install-global-guides.sh --dry-run
-   ```
+- Reusable source templates retain `<your-github-username>` and `<your-git-email@example.com>`.
+- Explicit `--github-owner` / `-GitHubOwner` and `--git-email` / `-GitEmail` values are rendered only into installed targets.
+- When flags are omitted, preserve existing non-placeholder local values independently in Codex and Claude guides.
+- Interactive installation asks once whether to back up, defaulting to yes.
+- Non-interactive installation defaults to backup.
+- Use `--backup` / `-Backup` or `--no-backup` / `-NoBackup` to make the choice explicit.
+- Backups belong under `<home>/backups/agent-global-guides/<timestamp>/`, outside active skill discovery.
+- When backup is disabled, report that installer recovery is unavailable.
 
-   Or, from an installed skill:
+## Legacy skill cleanup
 
-   ```bash
-   <skill-dir>/scripts/install-global-guides.sh --dry-run
-   ```
+Repository-mode installation places both `codex-subagent-orchestration` and `claude-subagent-orchestration` into both homes. Remove `skills/subagent-orchestration` only after both installed replacement directories are recursively identical to source and each `SKILL.md` frontmatter name matches its directory. Malformed or incomplete replacements must keep the legacy skill and make cleanup fail explicitly.
 
-4. Install only after the scan and dry-run are acceptable:
+Dry-run reports each exact planned removal and recovery policy. Real installation reports each removed path and its backup path or `recovery unavailable`. Cleanup is idempotent.
 
-   ```bash
-   scripts/install-global-guides.sh
-   ```
+## Safety
 
-5. Report:
-   - Which source directory was used.
-   - Whether the scan passed.
-   - Which global files were installed.
-   - Whether modular skills were installed, or skipped because the installer was running in installed-skill mode.
-   - Whether existing files or skill directories were backed up.
-   - That new Codex and Claude Code sessions are needed to guarantee the new rules are loaded.
+- Scanner failure must exit before the first target write.
+- Dry-run must not modify populated or absent targets.
+- Never edit the source templates to personalize an installation.
+- Never back up changed skills inside active `skills/` directories.
+- Do not install modular skills when source and target resolve to the same directory.
+- Chinese guide files are synchronized review references, not active installed guides.
+- Do not modify a repository or real global homes outside the user's requested scope.
 
-## Safety Rules
+## Options
 
-- Do not install unscanned templates unless the user explicitly asks to skip scanning.
-- Do not overwrite existing global files without backup.
-- Do not overwrite existing same-named skill directories without backup unless they are already identical.
-- Do not install modular skills when the resolved skills source is the same as the target skills directory.
-- Do not install the Chinese reference files as active global guides. They are review/reference copies only.
-- Do not edit the user's current repository unless the user asked to update the guide package itself.
-- If target global paths are read-only in the current sandbox, request escalation or explain the required manual command.
+Bash: `--source`, `--codex-home`, `--claude-home`, `--github-owner`, `--git-email`, `--backup`, `--no-backup`, `--dry-run`, `--skip-skills`.
 
-## Scripts
-
-- `scripts/scan-guides.sh`: scans markdown templates and bundled skill files for known personal values and common secret patterns.
-- `scripts/install-global-guides.sh`: scans, backs up existing global files, installs English templates, installs modular skills in repository mode, and verifies copies.
-- In repository mode, the installer installs `skills/*` into both Codex and Claude skills directories. In installed-skill mode, it skips modular skills to avoid copying a user's skills directory onto itself.
-
-Useful options:
-
-- `--dry-run`: show actions without writing files.
-- `--source <dir>`: install from an explicit source directory containing `AGENTS.md` and `CLAUDE.md`.
-- `--codex-home <dir>`: override `${CODEX_HOME:-$HOME/.codex}`.
-- `--claude-home <dir>`: override `${CLAUDE_HOME:-$HOME/.claude}`.
-- `--skip-scan`: skip scanning only when the user explicitly accepts that risk.
-- `--skip-skills`: install only `AGENTS.md` and `CLAUDE.md`.
+PowerShell: `-Source`, `-CodexHome`, `-ClaudeHome`, `-GitHubOwner`, `-GitEmail`, `-Backup`, `-NoBackup`, `-DryRun`, `-SkipSkills`.

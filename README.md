@@ -1,88 +1,69 @@
 # Agent Global Guides
 
-Sanitized, project-agnostic global instruction templates for Codex and Claude Code.
+Sanitized, project-agnostic global instruction templates and skill-routed workflows for Codex and Claude Code.
 
-## Contents
+## Package
 
-- `docs/AGENTS.md` - English global guide for Codex as the primary agent.
-- `docs/CLAUDE.md` - English global guide for Claude Code as the primary agent.
-- `docs/AGENTS.zh.md` - Chinese reference version for the Codex guide.
-- `docs/CLAUDE.zh.md` - Chinese reference version for the Claude Code guide.
-- `scripts/install-global-guides.sh` - Clone-and-run installer for the English global guides.
-- `scripts/scan-guides.sh` - Secret and personal-info scanner for the guide templates.
-- `skills/agent-guides-installer/` - Codex skill for installing this guide package.
-- `skills/authoritative-planning/` - Planning, checklists, verification evidence, and docs landing workflow.
-- `skills/git-repository-governance/` - Git repository hygiene, security, documentation, commits, changelogs, versioning, and release workflow.
-- `skills/codex-subagent-orchestration/` - Codex-primary subagent dispatch, monitoring, permissions, and fallback workflow.
-- `skills/claude-subagent-orchestration/` - Claude-primary subagent dispatch, monitoring, permissions, search delegation, and fallback workflow.
-- `skills/nginx-service-management/` - Nginx inspection, modification, reload, removal, and port reporting workflow.
-- `skills/deployment-activation/` - Frontend/backend/nginx deployment activation workflow.
-- `skills/browser-validation/` - Browser, screenshot, trace, and real-machine validation workflow.
-- `skills/handoff-context/` - Handoff prompt and context recovery workflow.
-- `skills/claude-image-inspection/` - Claude-specific image inspection workflow.
+- `docs/AGENTS.md`, `docs/CLAUDE.md`: concise English global guides.
+- `docs/AGENTS.zh.md`, `docs/CLAUDE.zh.md`: synchronized Chinese review references.
+- `skills/`: authoritative planning, repository governance, agent-specific orchestration, deployment, nginx, browser validation, handoff, image inspection, and installer workflows.
+- `scripts/install-global-guides.sh`, `scripts/scan-guides.sh`: Linux/macOS entrypoints.
+- `scripts/install-global-guides.ps1`, `scripts/scan-guides.ps1`: Windows PowerShell entrypoints.
 
-## Install From a Clone
+## Install From A Clone
 
-Run the scanner first:
+Scanning is mandatory and runs again inside every dry-run and real installation.
+
+Linux or macOS:
 
 ```bash
 scripts/scan-guides.sh
+scripts/install-global-guides.sh --dry-run --backup
+scripts/install-global-guides.sh --backup
 ```
 
-Preview the install:
+Windows PowerShell:
 
-```bash
-scripts/install-global-guides.sh --dry-run
+```powershell
+.\scripts\scan-guides.ps1
+.\scripts\install-global-guides.ps1 -DryRun -Backup
+.\scripts\install-global-guides.ps1 -Backup
 ```
 
-Install the English global guides:
+Without an explicit backup flag, an interactive run asks once and defaults to backup; a non-interactive run backs up automatically. Use `--no-backup` or `-NoBackup` only when installer recovery is intentionally waived.
 
-```bash
-scripts/install-global-guides.sh
-```
-
-The installer writes:
-
-- `docs/AGENTS.md` to `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
-- `docs/CLAUDE.md` to `${CLAUDE_HOME:-$HOME/.claude}/CLAUDE.md`
-- `skills/*` to `${CODEX_HOME:-$HOME/.codex}/skills/`
-- `skills/*` to `${CLAUDE_HOME:-$HOME/.claude}/skills/`
-
-Existing target files and changed same-named skill directories are backed up with a timestamp before replacement. Identical skill directories are left in place. Use `--skip-skills` to install only the global markdown files.
-
-Start new Codex and Claude Code sessions after installation to guarantee the new global rules are loaded.
-
-## Install as a Codex Skill
-
-From Codex, ask to install the skill from this repository path:
+Backups are stored outside active skills at:
 
 ```text
-Install the Codex skill from <owner>/<repo> path skills/agent-guides-installer
+<home>/backups/agent-global-guides/<timestamp>/
 ```
 
-After installing the skill, restart Codex. Then ask:
+The installer writes English guides and, in repository mode, the complete `skills/*` package to both Codex and Claude homes. After validating both new orchestration skills, it removes the legacy `skills/subagent-orchestration` from both homes. Dry-run reports the exact planned removals.
 
-```text
-Use $agent-guides-installer to install the agent global guides.
+## Local Identity Values
+
+The repository keeps sanitized placeholders. Render local values during installation:
+
+```bash
+scripts/install-global-guides.sh --github-owner <owner> --git-email <email>
 ```
 
-The skill includes its own copy of the sanitized templates under `skills/agent-guides-installer/assets/guides/`, so it can install the global markdown files even when only the skill path is available. Installed-skill mode skips modular skills by design. Clone the full repository and run `scripts/install-global-guides.sh` when you also want `skills/*` installed.
+```powershell
+.\scripts\install-global-guides.ps1 -GitHubOwner <owner> -GitEmail <email>
+```
 
-## What Was Sanitized
+When identity flags are omitted, existing non-placeholder values in each local global guide are preserved. Source templates are never personalized.
 
-These files are intended as reusable templates. Personal and machine-specific values are represented with placeholders, including:
+## Installed-Skill Mode
 
-- GitHub owner / username
-- Git commit email
-- Local example file paths
-- Business-specific callback route examples
+Installing only `skills/agent-guides-installer` provides bundled templates under `assets/guides/`. That mode updates the global markdown guides only. Clone the full repository to install or update every modular skill and perform legacy cleanup.
 
-Before using these guides on a real machine, replace placeholders such as `<your-github-username>` and `<your-git-email@example.com>` with local values.
+## Verification And Restart
 
-## Notes
+The project includes isolated Bash and PowerShell installer contracts and a Windows/Linux/macOS CI matrix. Tests never target real global homes.
 
-The English files are the intended source of truth for global agent configuration. The Chinese files are reference translations for review and discussion.
+Start new Codex and Claude Code sessions after installation because already-running sessions do not reliably reload global guides.
 
-The global `docs/AGENTS.md` and `docs/CLAUDE.md` files are intentionally slim. They keep always-loaded rules focused on safety, routing, and defaults. Longer task workflows live in skills and are loaded only when relevant.
+## Repository Scope
 
-Repository-specific rules should still live in the target repository's local agent docs, context docs, plans, ADRs, or domain documentation.
+Always-loaded guides stay concise. Detailed workflows load through skills. Repository-specific rules still belong in the target repository's `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, plans, ADRs, or domain documentation.

@@ -1,13 +1,13 @@
 ---
 name: codex-subagent-orchestration
-description: Plan, dispatch, monitor, and verify subagents when Codex is the primary agent, including Codex-to-Claude and Codex-to-Codex routing, task specs, read-only/editable invocation patterns, stream-json monitoring, timeout handling, retries, fallback, and permission boundaries. Use when Codex needs to delegate implementation, review, frontend work, backend work, parallel workstreams, or cross-agent execution.
+description: Use when Codex is primary and delegation, independent review, required web search, parallel workstreams, or cross-agent execution may materially improve the result.
 ---
 
 # Codex Subagent Orchestration
 
 ## Core Rules
 
-Prefer multiple subagents in parallel when a task has independent workstreams. First design the split: define each subagent's scope, file or module ownership, shared resources, dependencies, and acceptance checks. Avoid assigning two agents to edit the same route, component, module, migration, lockfile, process manager entry, or production config unless one task is explicitly review-only or the work is sequenced.
+Use subagents when delegation is materially useful, such as for independent workstreams, specialized capabilities, isolated review, required search, or a bounded task that reduces primary-agent context pressure. Delegation is a preference, not a requirement for every non-trivial task. When dispatching parallel work, first define each subagent's scope, file or module ownership, shared resources, dependencies, and acceptance checks. Avoid assigning two agents to edit the same route, component, module, migration, lockfile, process manager entry, or production config unless one task is explicitly review-only or the work is sequenced.
 
 The primary Codex agent remains responsible for planning, review, integration, final verification, and acceptance. Never trust a subagent's self-report alone. Before accepting work, independently:
 
@@ -26,7 +26,7 @@ Do not expose comments, development notes, implementation explanations, debug wo
 
 ## Codex-Primary Routing
 
-Before starting any non-trivial plan item, decide and record the executor in the authoritative plan:
+For each long or complex item in an authoritative task book, decide and record the executor:
 
 ```text
 Executor: Primary Codex / Codex subagent / Claude subagent / other named agent
@@ -36,10 +36,10 @@ Verification owner:
 
 Default routing when Codex is the primary agent:
 
-- Use Codex directly, or dispatch Codex subagents, for backend work, infrastructure, repository edits, refactors, migrations, build/test loops, mechanical migrations, log analysis, full-codebase search, and process or service management.
-- Use Claude subagents by default for frontend product/design/development work, including UI/UX design, component implementation, layout and styling, interaction behavior, browser-facing copy, and frontend review.
-- Use Claude subagents for independent reasoning, critique, planning, spec review, product copy review, documentation critique, architecture review, or second-pass judgment.
-- If a Claude subagent is unavailable or fails, Codex may handle frontend work directly or dispatch a Codex subagent instead, but record the reason.
+- Prefer Codex directly or a Codex subagent for backend work, infrastructure, repository edits, refactors, migrations, build/test loops, mechanical migrations, log analysis, full-codebase search, and process or service management.
+- Prefer Claude subagents for frontend product/design/development work, including UI/UX design, component implementation, layout and styling, interaction behavior, browser-facing copy, and frontend review.
+- Prefer Claude subagents for independent reasoning, critique, planning, spec review, product copy review, documentation critique, architecture review, or second-pass judgment.
+- These are routing preferences. Codex may work directly when dispatch adds no material value, the task is small or tightly coupled to primary-session state, or the primary must retain control.
 - Keep integration, dangerous operations, final verification, and acceptance with the primary Codex agent.
 - For nginx, production config, database migrations, auth, payments, certificates, process deletion, and other high-risk operations, subagents may draft analysis, patches, or command plans, but the primary Codex agent must perform or explicitly control the final dangerous step and verification.
 
@@ -47,20 +47,61 @@ Parallel dispatch safety:
 
 - Prefer parallel subagents for independent workstreams after assigning clear ownership boundaries.
 - If parallel subagents could contend for a database, repository, port, lockfile, process manager, production config, or the same files/modules, do not run those tasks in parallel.
-- Parallel-unsafety is not a reason to skip subagents entirely. Use one serial subagent when independent implementation, review, or analysis is still useful.
+- When parallel work is unsafe but delegation is still materially useful, use one serial subagent.
 
-Allowed direct-primary-agent exceptions:
+Direct primary-agent work is appropriate when:
 
 - The task is genuinely small and single-step, such as a tiny config read, one-line edit, or simple command.
 - The user explicitly says not to use subagents.
-- The relevant subagent tool is unavailable or has failed, and the failure is recorded.
+- The preferred subagent is unavailable or has failed and the fallback is recorded as specified below.
 - The task requires private parent-session context, live user interaction, or an active permission state that cannot be safely handed off.
 - The work is an urgent fix where dispatch overhead would materially increase risk; record the reason after the fix.
 - The step is the final dangerous operation or final acceptance check assigned to the primary agent.
 
-If a task strongly calls for independent subagent implementation, review, or analysis but Codex handles it fully directly, record the reason in the authoritative plan or state it before proceeding.
+For a long or complex task-book item, record why the primary agent is the executor when a materially useful delegation route was considered but not used. Small or routine direct work does not require executor metadata.
 
-Do not use "high risk" or "parallel unsafe" as a blanket reason to skip subagents. Those are reasons for serial dispatch and stricter primary-agent review, not for skipping useful subagent work.
+## Required Search Route
+
+When correct completion requires web search, current data, external official documentation, prices, laws, versions, news, online fact-checking, or other information that may have changed, default to one single-turn, read-only Codex search task with exactly:
+
+```text
+Model: gpt-5.5
+Reasoning effort: xhigh
+Turns: 1
+Access: read-only
+Allowed work: search, verify, summarize, cite
+Forbidden work: repository edits or any other state change
+```
+
+The search result must include direct source links and clearly separate source-confirmed facts from inference. It must return `verified`, `failed with reason`, or `not verified`.
+
+Do not silently or explicitly substitute another model, reasoning effort, or execution route. A different launcher may be used only when it still runs the exact `gpt-5.5`/`xhigh`, single-turn, read-only search task. If that exact search cannot be started or fails, stop the affected task, do not guess from memory, and report `failed with reason` or `not verified`. Record the unavailable or failed search in the authoritative task book when one exists and in dated `.debug/YYYY-MM-DD/`, then disclose it in the final result.
+
+Prefer built-in task controls that expose exact model and reasoning settings. For CLI fallback, preserve this exact option set before adding platform-specific input and logging syntax:
+
+```text
+codex --ask-for-approval never --search --model gpt-5.5 -c model_reasoning_effort="xhigh" exec --ephemeral --sandbox read-only ...
+```
+
+On Linux/macOS, feed the task spec through standard input and redirect JSONL/final output into dated `.debug/`. On Windows PowerShell, use `Get-Content -Raw` for the task spec and `Tee-Object` for the stream log. If the installed CLI rejects any exact option or cannot make search available, treat the required search as unavailable; do not alter the model or reasoning effort to make the command run.
+
+## Fallback And Disclosure
+
+When a preferred executor, model, tool, or permission route is unavailable, fails, times out, or is denied, fallback is allowed only when it preserves the task's requirements. The exact search route above is non-substitutable.
+
+For every fallback, record this unified entry in the authoritative task book for long or complex work and in dated `.debug/YYYY-MM-DD/`:
+
+```text
+Original executor:
+Exact failure or unavailability reason:
+Log path:
+Fallback executor:
+Fallback scope:
+Verification owner and result:
+Residual risk:
+```
+
+Never put agent failures, local permission problems, timeouts, or fallback history in the repository changelog. The final user-facing result must disclose the original executor, exact reason, fallback executor, affected scope, verification result, and residual risk. If every permitted fallback fails, stop the affected work and return an explicit `failed with reason` or `not verified` result rather than implying completion.
 
 ## Task Specs
 
@@ -89,6 +130,8 @@ Use these artifact locations:
 ```
 
 ## Calling Claude From Codex
+
+Prefer the platform's built-in task/subagent controls for dispatch, monitoring, cancellation, timeout, and result collection. Use CLI invocation only when built-in controls are unavailable or the task explicitly requires a CLI process. The examples below use POSIX shell syntax for Linux. On macOS, prefer the built-in timeout because GNU `timeout` is not installed by default. On Windows PowerShell, replace input/output redirection with `Get-Content -Raw ... | & <command> ... 2>&1 | Tee-Object -FilePath ...`, and enforce the hard timeout with the built-in task control or PowerShell process/job APIs.
 
 Claude subagent read-only invocation pattern:
 
@@ -134,6 +177,8 @@ Claude subagent monitoring, timeout, and fallback:
 - When fallback happens, record the exact reason in the authoritative plan and keep the stream log under `.debug/`.
 
 ## Calling Codex Subagents
+
+Use built-in Codex task/subagent controls first. For CLI fallback, Linux/macOS may use the POSIX forms below. In Windows PowerShell, pipe `Get-Content -Raw` into `codex`, use `Tee-Object` for the JSONL log, and keep all paths native or quoted; do not assume Bash, `/tmp`, `timeout`, `tail`, `sed`, or `ps` exists.
 
 Codex subagent read-only invocation pattern:
 
@@ -187,7 +232,7 @@ Claude CLI monitoring notes from 2026-06-25:
 
 ## Monitoring And Acceptance
 
-Progress synchronization is snapshot-based, not a live shared state. Check:
+Progress synchronization is snapshot-based, not a live shared state. Prefer built-in status/wait/read controls. CLI fallback checks for Linux/macOS include:
 
 ```bash
 tail -n 80 .debug/YYYY-MM-DD/subagents/<task>.codex.jsonl
@@ -197,6 +242,17 @@ sed -n '1,220p' .debug/YYYY-MM-DD/subagents/<task>.claude.final.md
 ps aux | grep <process-name>
 git status --short
 ls <target-dir>
+```
+
+Windows PowerShell equivalents include:
+
+```powershell
+Get-Content -LiteralPath .debug/YYYY-MM-DD/subagents/<task>.codex.jsonl -Tail 80
+Get-Content -LiteralPath .debug/YYYY-MM-DD/subagents/<task>.claude.stream.jsonl -Tail 80
+Get-Content -LiteralPath .debug/YYYY-MM-DD/subagents/<task>.codex.final.md -TotalCount 220
+Get-Process -Name <process-name> -ErrorAction SilentlyContinue
+git status --short
+Get-ChildItem -LiteralPath <target-dir>
 ```
 
 The primary Codex agent must still make the final decision and must independently verify the real path, diff, logs, and relevant checks. Never accept a subagent self-report alone.

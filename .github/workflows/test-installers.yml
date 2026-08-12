@@ -1,0 +1,40 @@
+name: Test installers
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  installers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PowerShell scan and tests
+        if: runner.os == 'Windows' || runner.os == 'Linux'
+        shell: pwsh
+        run: |
+          ./scripts/scan-guides.ps1
+          ./tests/test-installers.ps1
+
+      - name: Bash scan and tests
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          ./scripts/scan-guides.sh
+          ./tests/test-installers.sh
+
+      - name: Optional PowerShell parity on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            pwsh -NoProfile -File ./scripts/scan-guides.ps1
+            pwsh -NoProfile -File ./tests/test-installers.ps1
+          else
+            echo 'pwsh unavailable; PowerShell behavior remains covered on Windows and Ubuntu.'
+          fi

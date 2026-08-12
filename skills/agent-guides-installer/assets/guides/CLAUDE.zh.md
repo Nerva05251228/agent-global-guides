@@ -16,21 +16,25 @@
 - 需要本地 Git 身份时使用的提交邮箱：`<your-git-email@example.com>`
 - 仓库可见性：默认 private，除非用户明确要求 public
 
-仓库存在后，用 `setup-matt-pocock-skills` 初始化项目。如果它询问 issue tracking、triage labels、domain documents 或相关默认值，且用户说使用默认值，则直接接受默认值，不继续追问。
+仓库存在后，询问用户是否运行 `setup-matt-pocock-skills`，仅在确认后运行。如果它询问 issue tracking、triage labels、domain documents 或相关默认值，且用户说使用默认值，则直接接受默认值，不继续追问。
 
 ## Core Operating Rules
 
-使用 `.debug/` 保存本地调试产物：logs、screenshots、traces、subagent logs、task specs 和临时 captures。`.debug/` 必须 Git-ignored，不提交。
+使用按日期划分的 `.debug/YYYY-MM-DD/` 保存本地 logs、screenshots、traces、subagent logs、prompts、task specs、临时 tooling 和 captures。`.debug/` 必须 Git-ignored 且不提交；没有用户明确授权时，绝不自动清理。
 
 tracked files、Git history 和 release documentation 只记录最终形成的仓库变更。不要在 changelog 中写入本机调试失败、重试过程、agent activity、command transcripts、validation logs、机器状态或 secrets。完整规范使用 `$git-repository-governance`。
 
-多步骤工作在实现前创建或识别权威计划。聊天消息不是权威计划，除非同一计划写入仓库文档。计划和 checklist 细节使用 `$authoritative-planning`。
+长任务或复杂任务在实现前，必须在 `docs/plans/` 下创建或识别纳入版本控制的权威任务书。触发条件包括：三个或更多相互依赖步骤、跨多个 modules 或 services、使用 subagents、deployment、migration、高风险操作、跨 session 或有上下文压缩风险，或用户明确指定为长/复杂任务。聊天不是权威任务书。字段、executor 记录、checklist、证据、重开和恢复规则使用 `$authoritative-planning`。
 
 如果当前上下文不清晰、对话被 compact/truncate，或中断后恢复工作，先检查仓库计划文档，不要只凭记忆继续。如果没有计划或计划过期，先更新计划再推进非平凡依赖工作。
 
 文档是计划基线，但文档自洽不等于实现有效。完成项需要实现完成、真实检查通过、更新归属文档、协调决策变化，仅在仓库策略要求时更新 changelog，并立即更新 checklist。
 
 使用明确验证状态：`verified`、`failed with reason` 或 `not verified`。
+
+权威 checklist 的完成项必须记录 ISO-8601 完成时间；完成证据失效时，必须将该项 reopen，并记录原因和重开时间。
+
+当正确完成任务确实需要 web 或 current-data search 时，默认交给一个单轮、只读的 Codex 搜索任务，精确使用 `gpt-5.5` 模型和 `xhigh` reasoning。该任务只能搜索、验证、总结并引用直接来源，不得编辑仓库或其他状态，并须区分有来源支持的事实与推断。绝不静默替换模型或执行路线。如果该搜索无法运行或失败，停止受影响的任务，不凭记忆猜测；在任务书和按日期划分的 `.debug/` 中记录失败，并向用户报告 `failed with reason` 或 `not verified`。
 
 ## Skill Routing
 
@@ -46,11 +50,11 @@ tracked files、Git history 和 release documentation 只记录最终形成的�
 - `$claude-image-inspection`：通过 Claude Agent SDK path 进行 Claude-specific image reading 和 image judgment logs。
 - `$agent-guides-installer`：安装、扫描、dry-run 或更新这套 global guide package。
 
-涉及 web search、latest information、external official docs、prices、laws、versions、news、online fact-checking，或任何可能随时间变化的信息时，使用一个单轮 Codex subagent 搜索。默认不要让 Claude 直接 web search。Codex 搜索任务只搜索/验证/总结，避免仓库编辑，包含 source links，区分 source-confirmed facts 与 inference，并返回 `verified`、`failed with reason` 或 `not verified`。
-
 ## Subagent Defaults
 
-开始任何非平凡计划项前，决定并记录 executor：`Primary Claude`、`Codex subagent`、`Claude subagent` 或其他命名 agent。记录 dispatch reason 和 verification owner。
+每个长任务或复杂任务的权威计划项都要记录 executor（`Primary Claude`、`Codex subagent`、`Claude subagent` 或其他命名 agent）、dispatch reason 和 verification owner。普通短任务不强制要求这些元数据。
+
+以下路由是优先偏好，不是强制派发。只有在 subagent 能实质改善任务时才使用；否则主 agent 可以直接执行。
 
 Claude 作为主 agent 时的默认路由：
 
@@ -69,6 +73,8 @@ Claude 作为主 agent 时的默认路由：
 ## High-Risk Safety
 
 除非用户明确授权该精确操作，否则不要删除数据库、清空用户上传文件、修改生产 secrets、打印私钥内容或更改生产 keys。
+
+执行 force push、删除远程 branch、创建或变更 tag/release、production deployment 或不可逆的外部操作前，披露精确目标和预期影响，并取得所需授权。失败后先检查真实状态和 logs，再决定是否重试；绝不盲目重试。最终结果必须说明已执行与未执行范围、验证状态、残余风险，以及可用的 rollback 或 recovery。
 
 不要重复启动多个 backend processes。重启服务前先确认实际管理方式：PM2、systemd、supervisor、Docker 或 manual process。
 

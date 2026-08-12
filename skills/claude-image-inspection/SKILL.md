@@ -1,13 +1,15 @@
 ---
 name: claude-image-inspection
-description: Use Claude Code or the Claude Agent SDK path to inspect local images, screenshots, visual references, UI mockups, and image-based evidence while keeping scripts, prompts, and judgment logs under .debug. Use when Codex or Claude needs Claude-specific image reading, visual inspection through the Claude SDK, or image judgment logs.
+description: Use when Claude or a Claude subagent must personally inspect local images, screenshots, visual references, UI mockups, or image-based evidence.
 ---
 
 # Claude Image Inspection
 
 ## Claude image-reading rules
 
-When Claude is the primary agent and the task requires reading or judging image content, prefer Claude's own image-reading path through the local Claude Agent SDK. Do not route to Codex only for image reading.
+When Claude or a Claude subagent must personally read or judge image content, use Claude's own image-reading path through the local Claude Agent SDK. The SDK path is required for Claude-native visual judgment.
+
+Codex may inspect images with native vision. Claude may also delegate image judgment to Codex, but that is delegated Codex judgment and must not be described as Claude-native inspection.
 
 Use a small local script that converts the image to base64, sends it to `@anthropic-ai/claude-agent-sdk`, and keeps:
 
@@ -58,10 +60,10 @@ for await (const message of query({
 }
 ```
 
-If the SDK is installed in the current project, prefer a normal bare import:
+In a Node project, install the SDK with the project's actual package manager, normally as a development or tooling dependency, and update the lockfile:
 
 ```bash
-npm install @anthropic-ai/claude-agent-sdk
+npm install --save-dev @anthropic-ai/claude-agent-sdk
 ```
 
 Then use:
@@ -70,12 +72,16 @@ Then use:
 import { query } from '@anthropic-ai/claude-agent-sdk'
 ```
 
-If the SDK is installed globally, normal bare imports may not resolve from an arbitrary project. In that case, use a global-path import bridge:
+In a non-Node project, use an isolated tooling directory under `.debug/YYYY-MM-DD/image-inspection/tooling/`, keep it ignored, and install the SDK there. If an existing global installation must be used, resolve its root dynamically with the active package manager, such as `npm root -g`; never hard-code a Linux global-module path.
+
+Example dynamic global import bridge:
 
 ```js
 import { createRequire } from 'node:module'
+import { execFileSync } from 'node:child_process'
 
-const require = createRequire('/usr/lib/node_modules/')
+const globalRoot = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim()
+const require = createRequire(`${globalRoot}/`)
 const sdkPath = require.resolve('@anthropic-ai/claude-agent-sdk')
 const sdk = await import(sdkPath)
 
@@ -87,5 +93,6 @@ For image inspection:
 - Use a script for visual judgment.
 - Make the prompt specific: subject, count, layout, text correctness, readability, style consistency, cropping, edge quality, and task-specific acceptance criteria.
 - Store the script, prompt, and judgment log under `.debug/YYYY-MM-DD/image-inspection/`.
+- Keep `permissionMode: 'bypassPermissions'`, `allowDangerouslySkipPermissions: true`, `allowedTools: []`, and `maxTurns: 1` unchanged for this no-tool, single-turn image request.
 - The primary agent decides whether to accept, regenerate, or fix based on the judgment and the task spec.
 - Programmatic metadata such as dimensions, channels, alpha range, and histograms can be read directly with tools such as `sharp`; that is not visual judgment.

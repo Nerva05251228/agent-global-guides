@@ -1,13 +1,24 @@
 ---
 name: authoritative-planning
-description: Create and maintain authoritative plan documents, child task docs, checklists, executor records, verification evidence, and implementation-to-documentation landing for multi-step work. Use when work needs planning, checklist tracking, progress recovery after compaction, or docs-as-baseline discipline.
+description: Use when work has three or more dependent steps, spans modules or services, uses subagents, involves deployment, migration, or high-risk operations, may cross sessions or context compression, or is explicitly designated long or complex.
 ---
 
 # Authoritative Planning
 
-## Authoritative plan and checklist rules
+## Trigger and storage rules
 
-For multi-step work, create or identify an authoritative plan before implementation. Chat messages are not the authoritative plan unless the same plan is written to a repository document.
+Create or identify an authoritative task book before implementation when work:
+
+- Has three or more dependent steps.
+- Spans multiple modules or services.
+- Uses subagents.
+- Includes deployment, migration, or high-risk operations.
+- May continue across sessions or context compression.
+- Is explicitly designated long or complex by the user.
+
+Chat messages are not the authoritative task book. Keep it tracked under `docs/plans/`. Put local logs, screenshots, traces, subagent logs, prompts, task specs, and temporary tooling under `.debug/YYYY-MM-DD/`; keep `.debug/` ignored and uncommitted. Never clean `.debug/` automatically without explicit user authorization.
+
+## Task-book fields
 
 Use one main plan document for the overall objective. For larger work, split details into child documents and link them from the main plan.
 
@@ -20,13 +31,16 @@ docs/plans/<plan-name>/<subtask>.md
 
 The main plan should contain:
 
-- Objective and non-goals.
+- Objective, non-goals, scope, and acceptance criteria.
+- Expected files, modules, or services.
+- Accepted decisions, dependencies, and constraints.
 - Links to child task documents.
 - A Markdown checklist using `- [ ]` and `- [x]`.
 - Acceptance checks for each item or linked child item.
-- Executor for each item: `Primary Codex`, `Primary Claude`, `Codex subagent`, `Claude subagent`, or another explicitly named agent.
-- Dispatch reason for each non-trivial item, especially when the primary agent intentionally skips or routes around a useful subagent.
+- Executor, dispatch reason, and verification owner for each long or complex item. These fields are not mandatory for ordinary short tasks outside the task book.
 - A short progress log or links to dated validation artifacts.
+- Recovery files and relevant runtime or process state.
+- Subagent or tool fallback history: original executor, exact failure or unavailability reason, fallback executor (or `none` when no compliant fallback exists), affected scope, and dated `.debug/` log path.
 
 Each child document should contain:
 
@@ -35,23 +49,27 @@ Each child document should contain:
 - Constraints and non-goals.
 - Completion definition.
 - Verification commands or manual checks.
-- Executor, dispatch reason, and verification owner.
+- Executor, dispatch reason, and verification owner when the child item is long or complex.
 - A local checklist for its own subtasks.
 
 Checklist discipline:
 
 - Do not mark an item complete before implementation and verification are both done.
-- After each item is completed and verified, immediately update the authoritative checklist from `- [ ]` to `- [x]`.
+- After each item is implemented and verified, immediately update the authoritative checklist from `- [ ]` to `- [x]` and record an ISO-8601 completion timestamp.
 - Include the validation evidence beside the item or in the linked child document: command, test result, screenshot path, log path, diff reference, or explanation.
 - Do not wait until the end to batch-check completed items.
 - If an item is partially done, leave it unchecked and add a concise status note.
+- If completed evidence becomes invalid, reopen the item, change it back to `- [ ]`, and record the reason and ISO-8601 reopening time.
 - If the plan changes, update the plan document before continuing dependent work.
+
+For a search-required item, record the exact requested search executor and model, outcome, and dated log path. If an attempt fails or the required route is confirmed unavailable, stop that item and mark it `failed with reason`. Use `not verified` when the search could not be attempted and availability was not established. Do not infer an answer from memory or substitute another model or route unless the user or governing policy explicitly changes the requirement. Independent items may continue; dependent items must stop. Record `fallback executor: none` when no compliant fallback exists.
 
 Context recovery and compacted sessions:
 
-- If the active plan is unclear, the conversation appears compacted or truncated, or work is resumed after an interruption, inspect the repository's authoritative plan documents before continuing from memory.
+- If the active plan is unclear, the conversation appears compacted or truncated, or work resumes after an interruption, read the authoritative task book first rather than continuing from memory.
 - Check local `AGENTS.md`, `CONTEXT.md`, `docs/plans/`, relevant domain docs, task indexes, `changelog.md`, and dated `.debug/` artifacts such as subagent logs, validation logs, screenshots, and task specs.
 - Treat the on-disk plan and checklist as the memory baseline. Reconcile them with `git status`, current files, running processes, and validation artifacts before taking dependent action.
+- Identify the last completed item and its timestamp and evidence, then the first pending or reopened item in task-book order. Do not repeat a completed item while its implementation and verification evidence remain valid.
 - If no plan exists or the plan is stale, create or update the authoritative plan before continuing non-trivial work.
 
 ## Implementation-to-documentation landing
@@ -68,7 +86,7 @@ An item is only done after:
 - Divergences from prior design are reconciled.
 - Accepted decision changes are recorded in ADRs or equivalent decision docs.
 - The repository changelog has an entry only when policy requires it, and the entry describes the resulting repository or product change rather than implementation history, agent activity, or validation logs.
-- The authoritative plan checklist and any relevant child task checklist are updated from `- [ ]` to `- [x]` immediately after verification.
+- The authoritative plan checklist and any relevant child task checklist are updated from `- [ ]` to `- [x]` immediately after verification, with an ISO-8601 completion timestamp.
 - Progress indexes or task lists are updated when the repository uses them.
 
 Use explicit verification statuses:

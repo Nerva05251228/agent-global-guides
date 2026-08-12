@@ -16,21 +16,25 @@ If no repository exists, ask whether to create one. If the user wants a new repo
 - Commit email, when a local Git identity is needed: `<your-git-email@example.com>`
 - Repository visibility: private, unless the user explicitly requests public
 
-After a repository exists, initialize the project with `setup-matt-pocock-skills`. If it asks about issue tracking, triage labels, domain documents, or related defaults, and the user says to use defaults, accept the defaults without asking more questions.
+After a repository exists, ask whether to run `setup-matt-pocock-skills`. Run it only after confirmation. If it asks about issue tracking, triage labels, domain documents, or related defaults, and the user says to use defaults, accept the defaults without asking more questions.
 
 ## Core Operating Rules
 
-Use `.debug/` for local-only debugging artifacts: logs, screenshots, traces, subagent logs, task specs, and temporary captures. Keep `.debug/` Git-ignored and do not commit it.
+Use dated `.debug/YYYY-MM-DD/` paths for local-only logs, screenshots, traces, subagent logs, prompts, task specs, and temporary tooling or captures. Keep `.debug/` Git-ignored and uncommitted. Never clean it automatically without explicit user authorization.
 
 Keep tracked files, Git history, and release documentation focused on resulting repository changes. Never put local debug failures, retry history, agent activity, command transcripts, validation logs, machine-specific state, or secrets in a changelog. Use `$git-repository-governance` for the full policy.
 
-For multi-step work, create or identify an authoritative plan before implementation. Chat messages are not the authoritative plan unless the same plan is written to a repository document. Use `$authoritative-planning` for plan/checklist details.
+For long or complex work, create or identify a tracked authoritative task book under `docs/plans/` before implementation. This includes work with three or more dependent steps, multiple modules or services, subagents, deployment, migration, high-risk operations, cross-session or context-compression risk, or an explicit user designation. Chat is not the task book. Use `$authoritative-planning` for its fields, executor records, checklist, evidence, reopening, and recovery rules.
 
 If active context is unclear, the conversation appears compacted, or work resumes after interruption, inspect repository plan documents before continuing from memory. If no plan exists or it is stale, update it before dependent non-trivial work.
 
 Docs are the planning baseline, but self-consistent docs are not proof that implementation works. Completed items need implementation, real checks, updated owning docs, reconciled decision changes, a repository changelog entry only when policy requires it, and immediate checklist updates.
 
 Use explicit verification statuses: `verified`, `failed with reason`, or `not verified`.
+
+Authoritative checklist entries require ISO-8601 completion times, and invalidated completed items must be reopened with the reason and reopening time.
+
+When correct completion requires web or current-data search, default to one single-turn, read-only Codex search task using the exact model `gpt-5.5` with `xhigh` reasoning. It may search, verify, summarize, and cite direct sources only; it must not edit repositories or other state, and it must distinguish sourced facts from inference. Never silently substitute another model or route. If this search cannot run or fails, stop the affected task, do not guess from memory, record the failure in the task book and dated `.debug/`, and report `failed with reason` or `not verified` to the user.
 
 ## Skill Routing
 
@@ -46,11 +50,11 @@ Invoke these skills for long or task-specific workflows:
 - `$claude-image-inspection`: Claude-specific image reading through the Claude Agent SDK path and image judgment logs.
 - `$agent-guides-installer`: install, scan, dry-run, or update this global guide package.
 
-When a task involves web search, latest information, external official docs, prices, laws, versions, news, online fact-checking, or information that may change over time, use a single-turn Codex subagent for search. Do not let Claude directly perform web search by default. The Codex search task must search/verify/summarize only, avoid repository edits, include source links, distinguish source-confirmed facts from inference, and return `verified`, `failed with reason`, or `not verified`.
-
 ## Subagent Defaults
 
-Before starting any non-trivial plan item, decide and record the executor: `Primary Claude`, `Codex subagent`, `Claude subagent`, or another named agent. Record the dispatch reason and verification owner.
+For each long or complex authoritative-plan item, record the executor (`Primary Claude`, `Codex subagent`, `Claude subagent`, or another named agent), dispatch reason, and verification owner. This metadata is not mandatory for ordinary short tasks.
+
+The routing below expresses preferences, not mandatory delegation. Use a subagent when it materially improves the work; otherwise the primary agent may execute directly.
 
 Default routing when Claude is primary:
 
@@ -69,6 +73,8 @@ Do not accept a subagent self-report alone. Independently review diffs, rerun re
 ## High-Risk Safety
 
 Never delete databases, clear user uploads, modify production secrets, print private key contents, or change production keys unless the user explicitly authorizes that exact operation.
+
+Before a force push, remote-branch deletion, tag or release operation, production deployment, or irreversible external action, disclose the exact target and intended effect and obtain any required authorization. After a failure, inspect actual state and logs before retrying; never retry blindly. The final result must state what was and was not executed, verification status, residual risk, and available rollback or recovery.
 
 Do not repeat-start duplicate backend processes. Before restarting a service, inspect how it is actually managed: PM2, systemd, supervisor, Docker, or manual process.
 
